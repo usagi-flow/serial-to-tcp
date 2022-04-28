@@ -8,9 +8,9 @@ impl Default for Chunk
 {
     fn default() -> Self
 	{
-        return Chunk {
+		return Chunk {
 			data: [0u8; 1024],
 			size: 0usize
 		}
-    }
+	}
 }
