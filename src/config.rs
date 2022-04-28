@@ -1,5 +1,9 @@
 use std::net::{IpAddr, Ipv4Addr};
 
+lazy_static! {
+	static ref INSTANCE: Config = Config::default();
+}
+
 pub struct Config
 {
 	pub serial_device_path: String,
@@ -20,5 +24,13 @@ impl Default for Config
 			bind_address: IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)),
 			bind_port: 2022
 		};
+	}
+}
+
+impl Config
+{
+	pub fn get() -> &'static Self
+	{
+		return &INSTANCE;
 	}
 }
