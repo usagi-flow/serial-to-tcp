@@ -1,4 +1,4 @@
-use std::net::{IpAddr, Ipv4Addr, SocketAddr};
+use std::net::SocketAddr;
 
 use tokio::io::AsyncReadExt;
 use tokio::io::AsyncWriteExt;
@@ -12,6 +12,7 @@ use tokio::time::sleep;
 use tokio_serial::SerialPortBuilderExt;
 
 use crate::chunk::Chunk;
+use crate::config::Config;
 
 lazy_static! {
 	static ref INSTANCE: App = {
@@ -19,7 +20,10 @@ lazy_static! {
 	};
 }
 
-pub struct App;
+pub struct App
+{
+	config: Config
+}
 
 impl App
 {
@@ -30,13 +34,13 @@ impl App
 
 	pub fn new() -> Self
 	{
-		return App {};
+		let config = Config::default();
+		return App { config };
 	}
 
 	pub async fn run(&'static self) -> Result<(), std::io::Error>
 	{
-		let port = 2021u16;
-		let address = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)), port);
+		let address = SocketAddr::new(self.config.bind_address, self.config.bind_port);
 		let listener = TcpListener::bind(address).await?;
 
 		let (sender, receiver) = watch::channel::<Chunk>(Chunk::default());
@@ -45,16 +49,26 @@ impl App
 			loop {
 				self.read_serial(&sender).await.unwrap();
 
-				// Wait for the serial port to become available
-				//sleep(std::time::Duration::from_millis(3000)).await;
+				if self.config.poll_serial {
+					// Wait for the serial port to become available
+					sleep(std::time::Duration::from_millis(3000)).await;
+				}
+				else {
+					log::error!("Serial port could not be opened");
+					break;
+				}
 			}
 		});
 
-		loop {
-			log::info!("Listening for connections on port {}...", port);
+		log::info!("Listening for connections on {}:{}...",
+			self.config.bind_address, self.config.bind_port);
 
+		loop {
 			let (socket, peer_address) = listener.accept().await?;
 			let receiver_instance = receiver.clone();
+
+			// Each time a client connects, handle its connection asynchronously and accept new connections as
+			// soon as possible.
 			tokio::spawn(async move {
 				self.serve(socket, peer_address, receiver_instance).await.unwrap();
 			});
@@ -106,22 +120,40 @@ impl App
 		return chunk.data[0 .. chunk.size].to_vec();
 	}
 
-	pub async fn read_serial(&self, sender: &Sender<Chunk>) -> Result<(), std::io::Error>
+	pub async fn read_serial(&self, sender: &Sender<Chunk>) -> Result<(), String>
 	{
-		let path = "/dev/ttyUSB0";
-		let baud_rate = 115200u32;
-		let mut port = tokio_serial::new(path, baud_rate).open_native_async()?;
+		let path = &self.config.serial_device_path;
+		let baud_rate = self.config.serial_baud_rate;
 		let mut buffer = [0_u8; 1024];
+		let mut port;
+
+		match tokio_serial::new(path, baud_rate).open_native_async() {
+			Ok(opened_port) => port = opened_port,
+			// If we're polling, don't treat a failed attempt to open the port as an error.
+			Err(_) if self.config.poll_serial => return Ok(()),
+			// If we're not polling, do treat a failed attempt to open the port as an error.
+			Err(e) => return Err(e.to_string())
+		}
 
 		log::info!("Opened {} with a baud rate of {}", path, baud_rate);
 
 		loop {
-			let bytes_read = port.read(&mut buffer).await?;
+			let bytes_read;
+
+			match port.read(&mut buffer).await {
+				Ok(bytes_read_) => bytes_read = bytes_read_,
+				// If we're polling, don't treat a failed attempt to read as an error.
+				Err(_) if self.config.poll_serial => {
+					if let Err(_) = port.shutdown().await {
+						log::warn!("Failed to cleanly shut down the serial port after failing to read from it.");
+					}
+					return Ok(());
+				}
+				// If we're not polling, do treat a failed attempt to read as an error.
+				Err(e) => return Err(e.to_string())
+			}
 
 			if bytes_read > 0 {
-				//let string = String::from_utf8_lossy(&buffer);
-				//log::debug!("Data ({} bytes):\n{}", bytes_read, string);
-
 				let chunk = Chunk {
 					data: buffer.clone(),
 					size: bytes_read

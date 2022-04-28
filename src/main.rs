@@ -3,6 +3,7 @@ extern crate lazy_static;
 
 mod app;
 mod chunk;
+mod config;
 
 use app::App;
 
