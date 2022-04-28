@@ -22,7 +22,6 @@ lazy_static! {
 
 pub struct App
 {
-	config: Config
 }
 
 impl App
@@ -34,13 +33,12 @@ impl App
 
 	pub fn new() -> Self
 	{
-		let config = Config::default();
-		return App { config };
+		return App {};
 	}
 
 	pub async fn run(&'static self) -> Result<(), std::io::Error>
 	{
-		let address = SocketAddr::new(self.config.bind_address, self.config.bind_port);
+		let address = SocketAddr::new(Config::get().bind_address, Config::get().bind_port);
 		let listener = TcpListener::bind(address).await?;
 
 		let (sender, receiver) = watch::channel::<Chunk>(Chunk::default());
@@ -49,7 +47,7 @@ impl App
 			loop {
 				self.read_serial(&sender).await.unwrap();
 
-				if self.config.poll_serial {
+				if Config::get().poll_serial {
 					// Wait for the serial port to become available
 					sleep(std::time::Duration::from_millis(3000)).await;
 				}
@@ -61,7 +59,7 @@ impl App
 		});
 
 		log::info!("Listening for connections on {}:{}...",
-			self.config.bind_address, self.config.bind_port);
+			Config::get().bind_address, Config::get().bind_port);
 
 		loop {
 			let (socket, peer_address) = listener.accept().await?;
@@ -122,15 +120,15 @@ impl App
 
 	pub async fn read_serial(&self, sender: &Sender<Chunk>) -> Result<(), String>
 	{
-		let path = &self.config.serial_device_path;
-		let baud_rate = self.config.serial_baud_rate;
+		let path = &Config::get().serial_device_path;
+		let baud_rate = Config::get().serial_baud_rate;
 		let mut buffer = [0_u8; 1024];
 		let mut port;
 
 		match tokio_serial::new(path, baud_rate).open_native_async() {
 			Ok(opened_port) => port = opened_port,
 			// If we're polling, don't treat a failed attempt to open the port as an error.
-			Err(_) if self.config.poll_serial => return Ok(()),
+			Err(_) if Config::get().poll_serial => return Ok(()),
 			// If we're not polling, do treat a failed attempt to open the port as an error.
 			Err(e) => return Err(e.to_string())
 		}
@@ -143,7 +141,7 @@ impl App
 			match port.read(&mut buffer).await {
 				Ok(bytes_read_) => bytes_read = bytes_read_,
 				// If we're polling, don't treat a failed attempt to read as an error.
-				Err(_) if self.config.poll_serial => {
+				Err(_) if Config::get().poll_serial => {
 					if let Err(_) = port.shutdown().await {
 						log::warn!("Failed to cleanly shut down the serial port after failing to read from it.");
 					}
