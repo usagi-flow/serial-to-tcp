@@ -86,9 +86,11 @@ impl App
 
 				if data.len() > 0 {
 					if let Err(_) = socket.write_all(data.as_slice()).await {
-						log::warn!("Failed to send data to peer {:?}, disconnecting...",
-							peer_address);
-						socket.shutdown().await?;
+						// If we can't write, we assume the peer disconnected.
+						log::info!("{:?} disconnected", peer_address);
+
+						// shutdown() will likely fail because the socket is probably not connected anymore.
+						socket.shutdown().await.unwrap_or(());
 
 						let result: Result<(), std::io::Error> = Ok(());
 						return result;
