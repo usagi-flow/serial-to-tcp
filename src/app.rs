@@ -44,17 +44,25 @@ impl App
 		let (sender, receiver) = watch::channel::<Chunk>(Chunk::default());
 
 		tokio::spawn(async move {
+			let mut first_iteration = true;
+
 			loop {
-				self.read_serial(&sender).await.unwrap();
+				let has_read = self.read_serial(&sender).await.unwrap();
 
 				if Config::get().await.poll_serial {
 					// Wait for the serial port to become available
+					if has_read || first_iteration {
+						log::info!("Waiting for serial port...");
+					}
+
 					sleep(std::time::Duration::from_millis(3000)).await;
 				}
 				else {
 					log::error!("Serial port could not be opened");
 					break;
 				}
+
+				first_iteration = false;
 			}
 		});
 
@@ -120,8 +128,9 @@ impl App
 		return chunk.data[0 .. chunk.size].to_vec();
 	}
 
-	pub async fn read_serial(&self, sender: &Sender<Chunk>) -> Result<(), String>
+	pub async fn read_serial(&self, sender: &Sender<Chunk>) -> Result<bool, String>
 	{
+		let mut has_read = false;
 		let path = &Config::get().await.serial_device_path;
 		let baud_rate = Config::get().await.serial_baud_rate;
 		let mut buffer = [0_u8; 1024];
@@ -130,7 +139,7 @@ impl App
 		match tokio_serial::new(path, baud_rate).open_native_async() {
 			Ok(opened_port) => port = opened_port,
 			// If we're polling, don't treat a failed attempt to open the port as an error.
-			Err(_) if Config::get().await.poll_serial => return Ok(()),
+			Err(_) if Config::get().await.poll_serial => return Ok(has_read),
 			// If we're not polling, do treat a failed attempt to open the port as an error.
 			Err(e) => return Err(e.to_string())
 		}
@@ -138,25 +147,27 @@ impl App
 		log::info!("Opened {} with a baud rate of {}", path, baud_rate);
 
 		loop {
-			let bytes_read;
+			let bytes;
 
 			match port.read(&mut buffer).await {
-				Ok(bytes_read_) => bytes_read = bytes_read_,
+				Ok(bytes_read) => bytes = bytes_read,
 				// If we're polling, don't treat a failed attempt to read as an error.
 				Err(_) if Config::get().await.poll_serial => {
 					if let Err(_) = port.shutdown().await {
 						log::warn!("Failed to cleanly shut down the serial port after failing to read from it.");
 					}
-					return Ok(());
+					return Ok(has_read);
 				}
 				// If we're not polling, do treat a failed attempt to read as an error.
 				Err(e) => return Err(e.to_string())
 			}
 
-			if bytes_read > 0 {
+			if bytes > 0 {
+				has_read = true;
+
 				let chunk = Chunk {
 					data: buffer.clone(),
-					size: bytes_read
+					size: bytes
 				};
 
 				sender.send(chunk).or_else(|_: SendError<Chunk>| -> Result<(), ()> {
