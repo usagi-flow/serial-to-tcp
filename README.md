@@ -1,5 +1,7 @@
 # serial-to-tcp
 
+[![serial-to-tcp](https://github.com/etienne-k/serial-to-tcp/actions/workflows/rust.yml/badge.svg?branch=main)](https://github.com/etienne-k/serial-to-tcp/actions/workflows/rust.yml)
+
 An app which reads data from a serial port and serves it on a TCP port.
 
 ## How to use
