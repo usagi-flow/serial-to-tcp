@@ -1,7 +1,9 @@
 use std::net::{IpAddr, Ipv4Addr};
 
+use tokio::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
+
 lazy_static! {
-	static ref INSTANCE: Config = Config::default();
+	static ref INSTANCE: RwLock<Config> = RwLock::new(Config::default());
 }
 
 pub struct Config
@@ -29,8 +31,13 @@ impl Default for Config
 
 impl Config
 {
-	pub fn get() -> &'static Self
+	pub async fn get<'a>() -> RwLockReadGuard<'a, Config>
 	{
-		return &INSTANCE;
+		return INSTANCE.read().await;
+	}
+
+	pub async fn get_mut<'a>() -> RwLockWriteGuard<'a, Config>
+	{
+		return INSTANCE.write().await;
 	}
 }

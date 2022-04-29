@@ -38,7 +38,7 @@ impl App
 
 	pub async fn run(&'static self) -> Result<(), std::io::Error>
 	{
-		let address = SocketAddr::new(Config::get().bind_address, Config::get().bind_port);
+		let address = SocketAddr::new(Config::get().await.bind_address, Config::get().await.bind_port);
 		let listener = TcpListener::bind(address).await?;
 
 		let (sender, receiver) = watch::channel::<Chunk>(Chunk::default());
@@ -47,7 +47,7 @@ impl App
 			loop {
 				self.read_serial(&sender).await.unwrap();
 
-				if Config::get().poll_serial {
+				if Config::get().await.poll_serial {
 					// Wait for the serial port to become available
 					sleep(std::time::Duration::from_millis(3000)).await;
 				}
@@ -59,7 +59,7 @@ impl App
 		});
 
 		log::info!("Listening for connections on {}:{}...",
-			Config::get().bind_address, Config::get().bind_port);
+			Config::get().await.bind_address, Config::get().await.bind_port);
 
 		loop {
 			let (socket, peer_address) = listener.accept().await?;
@@ -120,15 +120,15 @@ impl App
 
 	pub async fn read_serial(&self, sender: &Sender<Chunk>) -> Result<(), String>
 	{
-		let path = &Config::get().serial_device_path;
-		let baud_rate = Config::get().serial_baud_rate;
+		let path = &Config::get().await.serial_device_path;
+		let baud_rate = Config::get().await.serial_baud_rate;
 		let mut buffer = [0_u8; 1024];
 		let mut port;
 
 		match tokio_serial::new(path, baud_rate).open_native_async() {
 			Ok(opened_port) => port = opened_port,
 			// If we're polling, don't treat a failed attempt to open the port as an error.
-			Err(_) if Config::get().poll_serial => return Ok(()),
+			Err(_) if Config::get().await.poll_serial => return Ok(()),
 			// If we're not polling, do treat a failed attempt to open the port as an error.
 			Err(e) => return Err(e.to_string())
 		}
@@ -141,7 +141,7 @@ impl App
 			match port.read(&mut buffer).await {
 				Ok(bytes_read_) => bytes_read = bytes_read_,
 				// If we're polling, don't treat a failed attempt to read as an error.
-				Err(_) if Config::get().poll_serial => {
+				Err(_) if Config::get().await.poll_serial => {
 					if let Err(_) = port.shutdown().await {
 						log::warn!("Failed to cleanly shut down the serial port after failing to read from it.");
 					}
