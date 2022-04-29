@@ -17,7 +17,7 @@ pub struct Config
 
 impl Default for Config
 {
-    fn default() -> Self
+	fn default() -> Self
 	{
 		return Config {
 			serial_device_path: String::from("/dev/ttyUSB1"),

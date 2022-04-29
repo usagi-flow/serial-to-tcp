@@ -81,11 +81,11 @@ impl App
 		}
 	}
 
-    async fn serve(&self,
+	async fn serve(&self,
 		mut socket: TcpStream,
 		peer_address: SocketAddr,
 		mut receiver: Receiver<Chunk>) -> Result<(), std::io::Error>
-    {
+	{
 		log::info!("{:?} connected", peer_address);
 
 		loop {
@@ -118,7 +118,7 @@ impl App
 				return result;
 			}
 		}
-    }
+	}
 
 	async fn get_data_copy(&self, receiver_instance: &Receiver<Chunk>) -> Vec<u8>
 	{

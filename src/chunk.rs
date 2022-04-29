@@ -6,7 +6,7 @@ pub struct Chunk
 
 impl Default for Chunk
 {
-    fn default() -> Self
+	fn default() -> Self
 	{
 		return Chunk {
 			data: [0u8; 1024],
