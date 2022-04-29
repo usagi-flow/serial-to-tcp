@@ -48,37 +48,39 @@ async fn main()
 async fn init_cli<'a>(context: &mut CLIContext<'a>) -> Result<(), &'a str>
 {
 	context.command = command!()
+		.arg(Arg::new("no-polling")
+			.short('n')
+			.takes_value(false)
+			.display_order(0)
+			.help("(optional) If set, do not poll the serial device: \
+				If the device is/becomes unavailable, terminate immediately."))
 		.arg(Arg::new("serial-device-path")
 			.long("serial-device")
 			.short('s')
 			.required(true)
 			.value_name("path")
+			.display_order(1)
 			.help("The serial device to read from, e.g. /dev/ttyUSB0"))
 		.arg(Arg::new("serial-baud-rate")
 			.long("baud-rate")
 			.short('b')
 			.required(true)
 			.value_name("number")
+			.display_order(2)
 			.help("The serial baud rate to use, e.g. 115200"))
-		.arg(Arg::new("polling")
-			.long("polling")
-			.short('w')
-			.default_value("true")
-			.possible_values(["true", "false"])
-			.value_name("true/false")
-			.help("If \"true\" (default), wait for the serial device to become available if it isn't; \
-				if \"false\", terminate the app"))
 		.arg(Arg::new("address")
 			.long("address")
 			.short('a')
 			.default_value("0.0.0.0")
 			.value_name("ip")
+			.display_order(3)
 			.help("The IP (v4 or v6) address to bind to"))
 		.arg(Arg::new("port")
 			.long("port")
 			.short('p')
 			.required(true)
 			.value_name("number")
+			.display_order(4)
 			.help("The port to listen on"));
 
 	let matches = context.command.clone().get_matches();
@@ -88,8 +90,7 @@ async fn init_cli<'a>(context: &mut CLIContext<'a>) -> Result<(), &'a str>
 	let serial_baud_rate_str = matches.value_of("serial-baud-rate").ok_or("Missing argument: <baud-rate>")?;
 	let serial_baud_rate: u32 = serial_baud_rate_str.parse().map_err(|_| "Invalid value for argument: <baud-rate>")?;
 
-	let polling_str = matches.value_of("polling").ok_or("Missing argument: <polling>")?;
-	let polling: bool = polling_str.parse().map_err(|_| "Invalid value for argument: <polling>")?;
+	let polling = !matches.is_present("no-polling");
 
 	let address_str = matches.value_of("address").ok_or("Missing argument: <address>")?;
 	let address: IpAddr = match address_str.parse::<Ipv4Addr>() {
