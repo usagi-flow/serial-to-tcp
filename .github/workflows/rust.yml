@@ -1,4 +1,4 @@
-name: Rust
+name: serial-to-tcp
 
 on:
   push:
