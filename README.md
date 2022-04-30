@@ -43,6 +43,10 @@ OPTIONS:
     -V, --version                 Print version information
 ```
 
+### Autostart
+
+An [OpenRC script](https://github.com/etienne-k/serial-to-tcp/tree/main/etc/init.d) is available.
+
 ## Building
 
 You'll need a [rust toolchain](https://rustup.rs), a recent stable version is recommended.
