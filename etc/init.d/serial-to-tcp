@@ -1,0 +1,13 @@
+#!/sbin/openrc-run
+
+name="serial-to-tcp"
+command="serial-to-tcp"
+command_args="-s /dev/ttyUSB0 -b 115200 -p 2021"
+command_background="true"
+output_log="/var/log/serial-to-tcp.log"
+pidfile="/run/serial-to-tcp.pid"
+
+depend() {
+	need net localmount
+	after firewall
+}
