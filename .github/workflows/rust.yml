@@ -10,13 +10,36 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  build:
-
+  check:
     runs-on: ubuntu-latest
-
+    steps:
+    - uses: actions/checkout@v3
+    - name: Check
+      run: cargo check
+    - name: Cache
+      uses: actions/cache@v3.0.11
+      with:
+        path: ~/.cargo/registry
+        key: "cargo-registry"
+  build:
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
     - name: Build
-      run: cargo build --verbose
-    - name: Run tests
-      run: cargo test --verbose
+      run: cargo build
+    - name: Cache
+      uses: actions/cache@v3.0.11
+      with:
+        path: ~/.cargo/registry
+        key: "cargo-registry"
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Run unit tests
+      run: cargo test
+    - name: Cache
+      uses: actions/cache@v3.0.11
+      with:
+        path: ~/.cargo/registry
+        key: "cargo-registry"
