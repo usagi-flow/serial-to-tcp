@@ -1,0 +1,6 @@
+pipeline:
+  build:
+    image: "rust:alpine"
+    commands:
+      - cargo check
+      - cargo test
