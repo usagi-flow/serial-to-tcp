@@ -1,6 +1,18 @@
-# serial-to-tcp
+<h1 align="center">serial-to-tcp</h1>
 
-[![serial-to-tcp](https://github.com/etienne-k/serial-to-tcp/actions/workflows/rust.yml/badge.svg?branch=main)](https://github.com/etienne-k/serial-to-tcp/actions/workflows/rust.yml)
+<p align="center">
+<a href="https://github.com/etienne-k/serial-to-tcp">
+<img alt="repository" src="https://img.shields.io/badge/repository-serial--to--tcp-8da0cb?style=for-the-badge&logo=github" height="20"/>
+</a>
+
+<a href="https://github.com/etienne-k/serial-to-tcp/actions">
+<img alt="build" src="https://img.shields.io/github/actions/workflow/status/etienne-k/serial-to-tcp/rust.yml?style=for-the-badge&logo=github" height="20"/>
+</a>
+
+<a href="https://github.com/etienne-k/serial-to-tcp/blob/main/LICENSE">
+<img alt="license" src="https://img.shields.io/github/license/etienne-k/serial-to-tcp?style=for-the-badge&logo=github&color=blue" height="20"/>
+</a>
+</p>
 
 An app which reads data from a serial port and serves it on a TCP port.
 
