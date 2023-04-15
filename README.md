@@ -18,7 +18,7 @@ An app which reads data from a serial port and serves it on a TCP port.
 
 ## How to use
 
-Clone this repo and build the app as outlined below (artifacts may be provided in the future).
+[Download a binary](https://github.com/etienne-k/serial-to-tcp/releases) for your architecture or build the app as outlined below.
 
 The app takes its configuration from the command line. Multiple instances of the app can be executed at once. The app can serve multiple clients at once.
 
