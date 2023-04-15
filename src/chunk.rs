@@ -11,6 +11,6 @@ impl Default for Chunk
 		return Chunk {
 			data: [0u8; 1024],
 			size: 0usize
-		}
+		};
 	}
 }

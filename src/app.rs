@@ -1,13 +1,10 @@
 use std::net::SocketAddr;
 
-use tokio::io::AsyncReadExt;
-use tokio::io::AsyncWriteExt;
-use tokio::net::TcpListener;
-use tokio::net::TcpStream;
+use tokio::io::{AsyncReadExt, AsyncWriteExt};
+use tokio::net::{TcpListener, TcpStream};
 use tokio::sync::watch;
-use tokio::sync::watch::Receiver;
-use tokio::sync::watch::Sender;
 use tokio::sync::watch::error::SendError;
+use tokio::sync::watch::{Receiver, Sender};
 use tokio::time::sleep;
 use tokio_serial::SerialPortBuilderExt;
 
@@ -20,9 +17,7 @@ lazy_static! {
 	};
 }
 
-pub struct App
-{
-}
+pub struct App {}
 
 impl App
 {
@@ -66,8 +61,11 @@ impl App
 			}
 		});
 
-		log::info!("Listening for connections on {}:{}...",
-			Config::get().await.bind_address, Config::get().await.bind_port);
+		log::info!(
+			"Listening for connections on {}:{}...",
+			Config::get().await.bind_address,
+			Config::get().await.bind_port
+		);
 
 		loop {
 			let (socket, peer_address) = listener.accept().await?;
@@ -81,10 +79,12 @@ impl App
 		}
 	}
 
-	async fn serve(&self,
+	async fn serve(
+		&self,
 		mut socket: TcpStream,
 		peer_address: SocketAddr,
-		mut receiver: Receiver<Chunk>) -> Result<(), std::io::Error>
+		mut receiver: Receiver<Chunk>
+	) -> Result<(), std::io::Error>
 	{
 		log::info!("{:?} connected", peer_address);
 
@@ -110,8 +110,7 @@ impl App
 			}
 			else {
 				// The sender has been dropped; disconnect gracefully from the peer.
-				log::warn!("Serial data sender has been dropped, disconnecting from peer: {:?}",
-					peer_address);
+				log::warn!("Serial data sender has been dropped, disconnecting from peer: {:?}", peer_address);
 				socket.shutdown().await?;
 
 				let result: Result<(), std::io::Error> = Ok(());
@@ -125,7 +124,7 @@ impl App
 		// Quickly copy the data into a vec and release the borrowed chunk
 		// TODO: use borrow_and_update() instead?
 		let chunk = receiver_instance.borrow();
-		return chunk.data[0 .. chunk.size].to_vec();
+		return chunk.data[0..chunk.size].to_vec();
 	}
 
 	pub async fn read_serial(&self, sender: &Sender<Chunk>) -> Result<bool, String>
@@ -170,10 +169,13 @@ impl App
 					size: bytes
 				};
 
-				sender.send(chunk).or_else(|_: SendError<Chunk>| -> Result<(), ()> {
-					log::warn!("Failed to transfer obtained serial data to the TCP connection(s)");
-					return Ok(());
-				}).unwrap();
+				sender
+					.send(chunk)
+					.or_else(|_: SendError<Chunk>| -> Result<(), ()> {
+						log::warn!("Failed to transfer obtained serial data to the TCP connection(s)");
+						return Ok(());
+					})
+					.unwrap();
 			}
 			else {
 				// No more data

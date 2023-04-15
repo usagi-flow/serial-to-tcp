@@ -1,0 +1,23 @@
+# See: https://rust-lang.github.io/rustfmt
+
+# Check:
+# cargo +nightly fmt --check
+
+# Install the nightly toolchain (required for the unstable features):
+# rustup toolchain install nightly
+
+unstable_features = true				# For now, unstable features are unavailable on a stable rust channel
+										# https://github.com/rust-lang/rustfmt/issues/3387
+
+hard_tabs = true
+max_width = 120							# Default is 100
+chain_width = 100						# Default is 60
+fn_call_width = 100						# Default is 60
+single_line_if_else_max_width = 80		# Default is 50
+brace_style = "AlwaysNextLine"			# Unstable, default is "SameLineWhere"
+control_brace_style = "ClosingNextLine"	# Unstable, default is "AlwaysSameLine"
+imports_granularity = "Module"			# Unstable, default is "Preserve"
+reorder_impl_items = true				# Unstable
+trailing_comma = "Never"				# Unstable, default is "Vertical"
+#reorder_impl_items = true				# Unstable
+newline_style = "Unix"					# Default is "Auto"
