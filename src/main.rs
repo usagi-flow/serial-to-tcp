@@ -8,7 +8,7 @@ mod config;
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
 
 use app::App;
-use clap::{Arg, command};
+use clap::{command, Arg};
 
 use crate::config::Config;
 
@@ -20,7 +20,7 @@ struct CLIContext<'a>
 #[tokio::main]
 async fn main()
 {
-	simple_logger::SimpleLogger::new().with_level(log::LevelFilter::Info) .env().init().unwrap();
+	simple_logger::SimpleLogger::new().with_level(log::LevelFilter::Info).env().init().unwrap();
 
 	let default_panic = std::panic::take_hook();
 	std::panic::set_hook(Box::new(move |info| {
@@ -37,7 +37,7 @@ async fn main()
 		Ok(()) => {
 			let app = App::instance();
 			app.run().await.unwrap();
-		},
+		}
 		Err(e) => {
 			log::error!("{}\n", e);
 			context.command.print_help().unwrap();
@@ -48,40 +48,46 @@ async fn main()
 async fn init_cli<'a>(context: &mut CLIContext<'a>) -> Result<(), &'a str>
 {
 	context.command = command!()
-		.arg(Arg::new("no-polling")
-			.short('n')
-			.takes_value(false)
-			.display_order(0)
-			.help("(optional) If set, do not poll the serial device: \
-				If the device is/becomes unavailable, terminate immediately."))
-		.arg(Arg::new("serial-device-path")
-			.long("serial-device")
-			.short('s')
-			.required(true)
-			.value_name("path")
-			.display_order(1)
-			.help("The serial device to read from, e.g. /dev/ttyUSB0"))
-		.arg(Arg::new("serial-baud-rate")
-			.long("baud-rate")
-			.short('b')
-			.required(true)
-			.value_name("number")
-			.display_order(2)
-			.help("The serial baud rate to use, e.g. 115200"))
-		.arg(Arg::new("address")
-			.long("address")
-			.short('a')
-			.default_value("0.0.0.0")
-			.value_name("ip")
-			.display_order(3)
-			.help("The IP (v4 or v6) address to bind to"))
-		.arg(Arg::new("port")
-			.long("port")
-			.short('p')
-			.required(true)
-			.value_name("number")
-			.display_order(4)
-			.help("The port to listen on"));
+		.arg(Arg::new("no-polling").short('n').takes_value(false).display_order(0).help(
+			"(optional) If set, do not poll the serial device: \
+				If the device is/becomes unavailable, terminate immediately."
+		))
+		.arg(
+			Arg::new("serial-device-path")
+				.long("serial-device")
+				.short('s')
+				.required(true)
+				.value_name("path")
+				.display_order(1)
+				.help("The serial device to read from, e.g. /dev/ttyUSB0")
+		)
+		.arg(
+			Arg::new("serial-baud-rate")
+				.long("baud-rate")
+				.short('b')
+				.required(true)
+				.value_name("number")
+				.display_order(2)
+				.help("The serial baud rate to use, e.g. 115200")
+		)
+		.arg(
+			Arg::new("address")
+				.long("address")
+				.short('a')
+				.default_value("0.0.0.0")
+				.value_name("ip")
+				.display_order(3)
+				.help("The IP (v4 or v6) address to bind to")
+		)
+		.arg(
+			Arg::new("port")
+				.long("port")
+				.short('p')
+				.required(true)
+				.value_name("number")
+				.display_order(4)
+				.help("The port to listen on")
+		);
 
 	let matches = context.command.clone().get_matches();
 
