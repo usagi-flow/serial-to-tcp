@@ -83,3 +83,13 @@ An easier way, if you have Podman or Docker installed, may be using [cross](http
 cargo install cross
 cross build --target=arm-unknown-linux-musleabihf
 ```
+
+### With Nix
+
+With [nix flakes enabled](https://nixos.wiki/wiki/Flakes#Enable_flakes):
+
+```bash
+nix build
+```
+
+After execution, the resulting executable lies in `result/bin/`.
